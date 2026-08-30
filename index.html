@@ -1,1 +1,86 @@
-te
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecionando...</title>
+    <style>
+        .btn-continuar {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #1DA1F2; /* Cor estilo Twitter/X */
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Mensagem de instrução visual para usuários de iPhone */
+        #ios-alert {
+            display: none;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: center; margin-top: 50px;">
+        <h2>Clique abaixo para continuar</h2>
+        
+        <!-- Botão que o usuário vai clicar -->
+        <button id="btnContinuar" class="btn-continuar">Continuar no Navegador</button>
+
+        <div id="ios-alert">
+            👉 No iPhone: Toque no ícone de <b>Bússola</b> ou nos <b>três pontinhos (...)</b> e selecione <b>"Abrir no Safari"</b>.
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('btnContinuar').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // COLOQUE AQUI O LINK PARA ONDE A PESSOA DEVE IR:
+            var targetUrl = "https://activemembers.site/"; 
+
+            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            var isAndroid = /android/i.test(userAgent);
+            var isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+
+            // 1. SE FOR ANDROID (Força a abertura no Google Chrome ou Navegador Padrão)
+            if (isAndroid) {
+                // Remove o "https://" ou "http://" da URL
+                var cleanUrl = targetUrl.replace(/^(https?:\/\/)/, '');
+                
+                // Dispara o Intent do Android que quebra a WebView do Twitter
+                var chromeIntent = "intent://" + cleanUrl + "#Intent;scheme=https;package=com.android.chrome;end";
+                
+                window.location.href = chromeIntent;
+                return;
+            }
+
+            // 2. SE FOR IPHONE / IOS
+            // A Apple não permite forçar a abertura do Safari diretamente via código por motivos de segurança.
+            if (isIOS) {
+                // Mostra a instrução na tela para ele abrir no Safari pelo menu do app
+                document.getElementById('ios-alert').style.display = 'block';
+                
+                // Tenta abrir em nova aba
+                window.open(targetUrl, '_blank');
+                return;
+            }
+
+            // 3. SE ESTIVER NO PC OU OUTRO SISTEMA
+            window.location.href = targetUrl;
+        });
+    </script>
+
+</body>
+</html>
