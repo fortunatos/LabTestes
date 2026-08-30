@@ -5,82 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecionando...</title>
     <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: 50px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
         .btn-continuar {
-            display: inline-block;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #fff;
-            background-color: #1DA1F2; /* Cor estilo Twitter/X */
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            text-decoration: none;
+            display: inline-block; padding: 15px 30px; font-size: 18px; font-weight: bold;
+            color: #fff; background-color: #1DA1F2; border: none; border-radius: 25px;
+            cursor: pointer; text-decoration: none; margin-bottom: 20px;
         }
-
-        /* Mensagem de instrução visual para usuários de iPhone */
-        #ios-alert {
-            display: none;
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f8d7da;
-            color: #721c24;
-            border-radius: 8px;
-            font-size: 14px;
-        }
+        .alert { display: none; padding: 12px; background: #f8d7da; color: #721c24; border-radius: 8px; font-size: 14px; margin-top: 15px; }
+        .alert.success { background: #d4edda; color: #155724; }
+        .spinner { display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #1DA1F2; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
-    <div style="text-align: center; margin-top: 50px;">
+    <div class="container">
         <h2>Clique abaixo para continuar</h2>
-        
-        <!-- Botão que o usuário vai clicar -->
         <button id="btnContinuar" class="btn-continuar">Continuar no Navegador</button>
-
-        <div id="ios-alert">
-            👉 No iPhone: Toque no ícone de <b>Bússola</b> ou nos <b>três pontinhos (...)</b> e selecione <b>"Abrir no Safari"</b>.
-        </div>
+        <div class="spinner" id="spinner"></div>
+        <div class="alert" id="alertMsg"></div>
     </div>
 
     <script>
-        document.getElementById('btnContinuar').addEventListener('click', function(e) {
+        const targetUrl = "https://activemembers.site/";
+        const btn = document.getElementById('btnContinuar');
+        const spinner = document.getElementById('spinner');
+        const alertMsg = document.getElementById('alertMsg');
+
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
+            btn.disabled = true;
+            spinner.style.display = 'block';
+            alertMsg.style.display = 'none';
+            alertMsg.className = 'alert';
 
-            // COLOQUE AQUI O LINK PARA ONDE A PESSOA DEVE IR:
-            var targetUrl = "https://activemembers.site/"; 
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isAndroid = /android/i.test(userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+            const isTwitterWebView = /Twitter|TwitterAndroid|TwitteriOS|TwitterWebView/i.test(userAgent); // Detecção extra
 
-            var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            var isAndroid = /android/i.test(userAgent);
-            var isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+            // Função para mostrar mensagem final após timeout (fallback)
+            function showManualInstructions(message) {
+                spinner.style.display = 'none';
+                alertMsg.textContent = message;
+                alertMsg.style.display = 'block';
+                btn.disabled = false;
+            }
 
-            // 1. SE FOR ANDROID (Força a abertura no Google Chrome ou Navegador Padrão)
+            // Tenta redirecionar e verifica se a página ainda está ativa após um curto intervalo
+            function tryOpenExternal(url, attempt) {
+                window.location.href = url;
+                // Se após 1,5s a página ainda estiver ativa, a tentativa falhou
+                setTimeout(() => {
+                    if (!document.hidden) {
+                        // Ainda estamos aqui, tentar próxima abordagem
+                        if (attempt === 0) {
+                            // Tentar com Intent
+                            tryOpenExternal("intent://" + targetUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end", 1);
+                        } else if (attempt === 1) {
+                            // Tentar com esquema googlechrome://
+                            tryOpenExternal("googlechrome://" + targetUrl.replace(/^https?:\/\//, ''), 2);
+                        } else {
+                            // Todas as tentativas falharam
+                            showManualInstructions("Não foi possível abrir automaticamente. Toque no menu (⋮) do Twitter e escolha 'Abrir no navegador'.");
+                        }
+                    }
+                }, 1500);
+            }
+
             if (isAndroid) {
-                // Remove o "https://" ou "http://" da URL
-                var cleanUrl = targetUrl.replace(/^(https?:\/\/)/, '');
-                
-                // Dispara o Intent do Android que quebra a WebView do Twitter
-                var chromeIntent = "intent://" + cleanUrl + "#Intent;scheme=https;package=com.android.chrome;end";
-                
-                window.location.href = chromeIntent;
-                return;
+                // Estratégia Android: Intent para Chrome, depois googlechrome://, depois instrução manual
+                tryOpenExternal("intent://" + targetUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end", 0);
             }
-
-            // 2. SE FOR IPHONE / IOS
-            // A Apple não permite forçar a abertura do Safari diretamente via código por motivos de segurança.
-            if (isIOS) {
-                // Mostra a instrução na tela para ele abrir no Safari pelo menu do app
-                document.getElementById('ios-alert').style.display = 'block';
-                
-                // Tenta abrir em nova aba
+            else if (isIOS) {
+                // iOS: não há como forçar Safari via JS. Mostrar instruções e tentar window.open
+                alertMsg.textContent = "👉 Toque no ícone de compartilhar (□) e selecione 'Abrir no Safari' ou use o menu (•••) e escolha 'Abrir no Safari'.";
+                alertMsg.style.display = 'block';
+                spinner.style.display = 'none';
+                btn.disabled = false;
+                // Tentar abrir em nova aba (pode funcionar em alguns casos)
                 window.open(targetUrl, '_blank');
-                return;
+            }
+            else {
+                // Desktop ou outros
+                window.location.href = targetUrl;
+                // Se ainda estiver aqui após 2s, mostrar mensagem
+                setTimeout(() => {
+                    if (!document.hidden) {
+                        showManualInstructions("Se não foi redirecionado, clique com o botão direito no link e escolha 'Abrir em nova aba'.");
+                    }
+                }, 2000);
             }
 
-            // 3. SE ESTIVER NO PC OU OUTRO SISTEMA
-            window.location.href = targetUrl;
+            // Backup geral: se nada funcionar e a página continuar visível após 5 segundos, instruir
+            setTimeout(() => {
+                if (!document.hidden && !alertMsg.style.display) {
+                    showManualInstructions("Parece que o navegador bloqueou o redirecionamento. Por favor, toque no menu (⋮) e selecione 'Abrir no navegador'.");
+                }
+            }, 5000);
         });
     </script>
-
 </body>
 </html>
