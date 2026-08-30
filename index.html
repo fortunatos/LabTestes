@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abrir no Chrome via Intent</title>
+    <title>Abrir no Chrome via Esquema Direto</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,18 +23,13 @@
             background-color: #1a73e8;
             text-decoration: none;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: background 0.3s;
-        }
-        .btn-chrome:hover {
-            background-color: #1557b0;
         }
     </style>
 </head>
 <body>
 
-    <!-- Link com a Intent corrigida para abrir o Google Chrome no Android -->
-    <a class="btn-chrome" href="com.android.chrome://google.com#Intent;scheme=https;package=com.android.chrome;end">
+    <!-- Link usando o esquema direto do Google Chrome -->
+    <a class="btn-chrome" href="googlechrome://navigate?url=https://google.com">
         Abrir no Chrome
     </a>
 
