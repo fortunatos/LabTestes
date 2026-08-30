@@ -5,30 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Continuar</title>
     <style>
-        body { font-family: -apple-system, Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 20px; }
-        .container { max-width: 500px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
-        h2 { color: #333; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f8fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px 25px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+        h2 { color: #14171a; margin-bottom: 10px; font-size: 1.5rem; }
+        p { color: #657786; margin-bottom: 20px; font-size: 0.95rem; }
         .btn {
-            display: inline-block; margin: 10px 0; padding: 14px 28px; font-size: 16px; font-weight: bold;
-            color: #fff; background-color: #1DA1F2; border: none; border-radius: 25px; cursor: pointer; text-decoration: none;
+            display: inline-block;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: #1da1f2;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+            transition: opacity 0.2s;
         }
         .btn:active { opacity: 0.8; }
-        .btn-copy { background-color: #657786; }
+        .btn-secondary { background: #e1e8ed; color: #14171a; }
+        .btn-copy { background: #17bf63; }
         .alert {
-            display: none; padding: 12px; background: #fff3cd; color: #856404; border-radius: 8px;
-            font-size: 14px; margin-top: 15px; border: 1px solid #ffeeba;
+            display: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 15px 0;
+            text-align: left;
         }
-        .alert.error { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-        .alert.success { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-info { background: #e8f5fd; color: #1a91da; border: 1px solid #b8dff5; }
+        .alert-error { background: #fde8e8; color: #c0392b; border: 1px solid #f5b7b1; }
+        .alert-success { background: #e8f8f0; color: #27ae60; border: 1px solid #a9dfbf; }
+        .qr-container { margin: 15px 0; display: none; }
+        .qr-container img { width: 180px; height: 180px; border-radius: 8px; border: 1px solid #e1e8ed; }
         .spinner {
-            display: none; margin: 20px auto; border: 4px solid #f3f3f3; border-top: 4px solid #1DA1F2;
-            border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1da1f2;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .link-box { 
-            background: #f1f1f1; padding: 8px; border-radius: 6px; word-break: break-all; font-size: 14px; 
-            margin: 10px 0; color: #555; display: none;
-        }
+        .divider { margin: 20px 0; border-top: 1px solid #e1e8ed; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -36,155 +78,219 @@
         <h2>Você está saindo do Twitter</h2>
         <p>Para continuar, use uma das opções abaixo.</p>
 
-        <!-- Botão principal que tenta abrir no navegador -->
-        <button id="btnContinuar" class="btn">Tentar abrir no navegador</button>
-        <div class="spinner" id="spinner"></div>
+        <!-- Botão principal para tentar abertura automática -->
+        <button id="btnTentar" class="btn">Tentar abrir no navegador</button>
+        <div id="spinner" class="spinner"></div>
 
-        <!-- Link de backup -->
-        <div class="link-box" id="linkBox">
-            <span id="linkText"></span>
+        <!-- Link direto (funciona se o usuário clicar, alguns webviews abrem externo) -->
+        <a id="linkDireto" href="https://activemembers.site/" target="_blank" rel="noopener" class="btn btn-secondary" style="display:none;">
+            Abrir link diretamente (toque aqui)
+        </a>
+
+        <!-- Área de fallback avançada -->
+        <div id="fallbackArea" style="display:none;">
+            <div class="divider"></div>
+            <p><strong>Se não abriu automaticamente:</strong></p>
+
+            <!-- Botão copiar link -->
+            <button id="btnCopiar" class="btn btn-copy">📋 Copiar link</button>
+
+            <!-- QR Code -->
+            <div class="qr-container" id="qrContainer">
+                <p>Escaneie com a câmera do celular:</p>
+                <img id="qrImage" src="" alt="QR Code para abrir no navegador">
+            </div>
+
+            <!-- Instruções específicas -->
+            <div id="instrucoes" class="alert alert-info"></div>
         </div>
-        <button id="btnCopiar" class="btn btn-copy" style="display:none;">Copiar link</button>
-
-        <div id="alertMsg" class="alert"></div>
     </div>
 
     <script>
         (function() {
-            const targetUrl = "https://activemembers.site/";
-            const btn = document.getElementById('btnContinuar');
+            const TARGET_URL = "https://activemembers.site/";
+            const btnTentar = document.getElementById('btnTentar');
             const spinner = document.getElementById('spinner');
-            const alertMsg = document.getElementById('alertMsg');
-            const linkBox = document.getElementById('linkBox');
-            const linkText = document.getElementById('linkText');
+            const linkDireto = document.getElementById('linkDireto');
+            const fallbackArea = document.getElementById('fallbackArea');
             const btnCopiar = document.getElementById('btnCopiar');
+            const qrContainer = document.getElementById('qrContainer');
+            const qrImage = document.getElementById('qrImage');
+            const instrucoes = document.getElementById('instrucoes');
 
             const ua = navigator.userAgent || '';
             const isAndroid = /android/i.test(ua);
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
             const isTwitter = /Twitter|Tweetbot|TwitterAndroid|TwitteriOS/i.test(ua);
 
-            function showAlert(msg, type = '') {
-                alertMsg.textContent = msg;
-                alertMsg.className = 'alert' + (type ? ' ' + type : '');
-                alertMsg.style.display = 'block';
-            }
-
+            // Funções auxiliares
             function showSpinner(show) {
                 spinner.style.display = show ? 'block' : 'none';
-                btn.disabled = show;
+                btnTentar.disabled = show;
+                btnTentar.style.opacity = show ? '0.6' : '1';
             }
 
-            function showManualOptions() {
+            function showFallback() {
                 showSpinner(false);
-                // Mostrar link para copiar
-                linkText.textContent = targetUrl;
-                linkBox.style.display = 'block';
-                btnCopiar.style.display = 'inline-block';
-                showAlert('Não foi possível abrir automaticamente. Toque no botão "Copiar link" e cole no navegador.', 'error');
-            }
+                linkDireto.style.display = 'block';
+                fallbackArea.style.display = 'block';
 
-            // Botão copiar
-            btnCopiar.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(targetUrl);
-                    showAlert('Link copiado! Abra seu navegador e cole na barra de endereços.', 'success');
-                } catch (err) {
-                    // Fallback: selecionar texto
-                    const range = document.createRange();
-                    range.selectNode(linkText);
-                    window.getSelection().removeAllRanges();
-                    window.getSelection().addRange(range);
-                    document.execCommand('copy');
-                    showAlert('Link copiado! (ou copie manualmente)', 'success');
+                // Gera QR Code
+                const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(TARGET_URL)}`;
+                qrImage.src = qrSrc;
+                qrContainer.style.display = 'block';
+
+                // Instruções específicas
+                if (isAndroid) {
+                    instrucoes.innerHTML = `
+                        <strong>Opções no Android:</strong><br>
+                        • Toque e segure no link acima e escolha "Abrir no navegador".<br>
+                        • Ou use o botão "Copiar link" e cole no Chrome.<br>
+                        • Ou escaneie o QR Code com a câmera.
+                    `;
+                } else if (isIOS) {
+                    instrucoes.innerHTML = `
+                        <strong>Opções no iPhone/iPad:</strong><br>
+                        • Toque no ícone de compartilhar (□) no Twitter e selecione "Abrir no Safari".<br>
+                        • Ou toque e segure no link acima e escolha "Abrir no Safari".<br>
+                        • Ou use o botão "Copiar link" e cole no Safari.<br>
+                        • Ou escaneie o QR Code com a câmera.
+                    `;
+                } else {
+                    instrucoes.innerHTML = `
+                        <strong>Opções:</strong><br>
+                        • Clique no link acima.<br>
+                        • Copie o link e cole no seu navegador.<br>
+                        • Escaneie o QR Code.
+                    `;
                 }
-            });
+                instrucoes.style.display = 'block';
+            }
 
             // Função para tentar múltiplas abordagens no Android
             function attemptAndroid() {
                 showSpinner(true);
-                let attempts = 0;
-                const maxAttempts = 3;
+                let attempt = 0;
+                const maxAttempts = 4; // Incluindo tentativas adicionais
 
-                const tryNext = () => {
-                    attempts++;
-                    if (attempts > maxAttempts) {
-                        showManualOptions();
+                function nextAttempt() {
+                    attempt++;
+                    if (attempt > maxAttempts) {
+                        showFallback();
                         return;
                     }
 
-                    // Abordagem 1: window.open com _blank
-                    if (attempts === 1) {
-                        const newWin = window.open(targetUrl, '_blank', 'noopener');
-                        // Se retornou null, provavelmente bloqueado
-                        if (!newWin) {
-                            tryNext();
-                        } else {
-                            // Pode ter aberto, mas não sabemos se foi no navegador externo
-                            // Verificar se a página foi escondida (indicando sucesso)
+                    const delay = 1500; // Tempo para verificar se a página perdeu o foco
+                    let url = '';
+
+                    switch (attempt) {
+                        case 1:
+                            // Tentativa 1: window.open com _blank
+                            const newWin = window.open(TARGET_URL, '_blank', 'noopener');
+                            if (!newWin) {
+                                // Bloqueado, pular para próxima
+                                nextAttempt();
+                                return;
+                            }
+                            // Verificar após delay
                             setTimeout(() => {
-                                if (!document.hidden) {
-                                    // Ainda visível, tentar próxima
-                                    tryNext();
-                                }
-                            }, 1200);
-                        }
-                    }
-                    // Abordagem 2: intent:// para Chrome
-                    else if (attempts === 2) {
-                        const cleanUrl = targetUrl.replace(/^https?:\/\//, '');
-                        const intentUrl = 'intent://' + cleanUrl + '#Intent;scheme=https;package=com.android.chrome;end';
-                        window.location.href = intentUrl;
-                        setTimeout(() => {
-                            if (!document.hidden) tryNext();
-                        }, 1200);
-                    }
-                    // Abordagem 3: googlechrome://
-                    else if (attempts === 3) {
-                        const cleanUrl = targetUrl.replace(/^https?:\/\//, '');
-                        const chromeScheme = 'googlechrome://' + cleanUrl;
-                        window.location.href = chromeScheme;
-                        setTimeout(() => {
-                            if (!document.hidden) tryNext(); // Se ainda está aqui, falhou
-                        }, 1200);
-                    }
-                };
+                                if (!document.hidden) nextAttempt();
+                            }, delay);
+                            break;
 
-                tryNext();
+                        case 2:
+                            // Tentativa 2: intent:// para Chrome
+                            const cleanUrl = TARGET_URL.replace(/^https?:\/\//, '');
+                            url = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+                            window.location.href = url;
+                            setTimeout(() => {
+                                if (!document.hidden) nextAttempt();
+                            }, delay);
+                            break;
+
+                        case 3:
+                            // Tentativa 3: googlechrome://
+                            const cleanUrl2 = TARGET_URL.replace(/^https?:\/\//, '');
+                            url = `googlechrome://${cleanUrl2}`;
+                            window.location.href = url;
+                            setTimeout(() => {
+                                if (!document.hidden) nextAttempt();
+                            }, delay);
+                            break;
+
+                        case 4:
+                            // Tentativa 4: esquema genérico de intent sem package específico
+                            const cleanUrl3 = TARGET_URL.replace(/^https?:\/\//, '');
+                            url = `intent://${cleanUrl3}#Intent;scheme=https;end`;
+                            window.location.href = url;
+                            setTimeout(() => {
+                                if (!document.hidden) nextAttempt();
+                            }, delay);
+                            break;
+                    }
+                }
+
+                nextAttempt();
             }
 
-            // Função para iOS
+            // Função para tentar abordagens no iOS
             function attemptIOS() {
-                showSpinner(false);
-                showAlert('👉 No iPhone/iPad: Toque no ícone de compartilhar (□) e selecione "Abrir no Safari". Ou use o menu (•••) do Twitter.', '');
-                // Tentar window.open (pode abrir nova aba dentro do webview)
-                window.open(targetUrl, '_blank');
-                // Exibir opções manuais
-                showManualOptions();
+                showSpinner(true);
+
+                // Tentativa 1: window.open (quase nunca funciona, mas tenta)
+                window.open(TARGET_URL, '_blank');
+
+                // Tentativa 2: x-web-search:// (esquema privado do Safari, pode funcionar)
+                setTimeout(() => {
+                    const cleanUrl = TARGET_URL.replace(/^https?:\/\//, '');
+                    window.location.href = `x-web-search://?${cleanUrl}`;
+                }, 500);
+
+                // Após 2 segundos, assume falha e mostra fallback
+                setTimeout(() => {
+                    if (!document.hidden) showFallback();
+                }, 2000);
             }
 
-            // Evento principal
-            btn.addEventListener('click', function(e) {
+            // Evento do botão principal
+            btnTentar.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (isAndroid) {
                     attemptAndroid();
                 } else if (isIOS) {
                     attemptIOS();
                 } else {
-                    // Desktop ou outro
-                    window.location.href = targetUrl;
+                    // Desktop ou outros
+                    window.location.href = TARGET_URL;
                     setTimeout(() => {
-                        if (!document.hidden) {
-                            showManualOptions();
-                        }
+                        if (!document.hidden) showFallback();
                     }, 2000);
                 }
             });
 
-            // Mostrar aviso se o usuário permanecer muito tempo sem ação
+            // Botão copiar link
+            btnCopiar.addEventListener('click', async function() {
+                try {
+                    await navigator.clipboard.writeText(TARGET_URL);
+                    instrucoes.className = 'alert alert-success';
+                    instrucoes.innerHTML = '✅ Link copiado! Abra seu navegador e cole na barra de endereços.';
+                } catch (err) {
+                    // Fallback para navegadores antigos
+                    const textArea = document.createElement('textarea');
+                    textArea.value = TARGET_URL;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    instrucoes.className = 'alert alert-success';
+                    instrucoes.innerHTML = '✅ Link copiado! Abra seu navegador e cole na barra de endereços.';
+                }
+            });
+
+            // Se o usuário não fizer nada após 8 segundos, mostrar opções manuais
             setTimeout(() => {
-                if (!document.hidden && !spinner.style.display) {
-                    showManualOptions();
+                if (!document.hidden && spinner.style.display === 'none' && !fallbackArea.style.display) {
+                    showFallback();
                 }
             }, 8000);
         })();
