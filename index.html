@@ -3,69 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abrir no Chrome</title>
+    <title>Abrir no Navegador</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            gap: 12px;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-            padding: 16px;
+            background-color: #f4f6f8;
+            color: #1f2937;
             text-align: center;
         }
-        .btn-chrome {
-            display: inline-block;
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-            background-color: #1a73e8;
-            text-decoration: none;
-            border-radius: 8px;
-        }
-        .aviso {
-            max-width: 420px;
+        /* Seta e guia apontando para os 3 pontinhos no canto superior direito */
+        .guia-topo {
+            position: fixed;
+            top: 12px;
+            right: 16px;
+            background-color: #111827;
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 12px;
             font-size: 14px;
-            color: #555;
+            max-width: 260px;
+            text-align: left;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: none;
+            animation: pulsar 1.6s infinite;
+        }
+        .guia-topo::after {
+            content: "";
+            position: absolute;
+            top: -8px;
+            right: 14px;
+            border-width: 0 8px 8px 8px;
+            border-style: solid;
+            border-color: transparent transparent #111827 transparent;
+        }
+        @keyframes pulsar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(4px); }
+        }
+        .card {
+            background: #ffffff;
+            padding: 28px 22px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            max-width: 400px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 20px;
+            margin: 0 0 10px 0;
+        }
+        p {
+            font-size: 15px;
+            color: #4b5563;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            transition: opacity 0.2s;
+        }
+        .btn:active {
+            opacity: 0.85;
+        }
+        .btn-primario {
+            background-color: #1a73e8;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+        .btn-secundario {
+            background-color: #e5e7eb;
+            color: #111827;
+        }
+        .btn-copiado {
+            background-color: #16a34a;
+            color: #ffffff;
+        }
+        .url-box {
+            margin-top: 14px;
+            padding: 10px;
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #6b7280;
+            word-break: break-all;
+            user-select: all;
         }
     </style>
 </head>
 <body>
 
-    <a id="abrir-chrome" class="btn-chrome" href="https://google.com" rel="noopener noreferrer">
-        Abrir no Chrome
-    </a>
-    <p id="aviso" class="aviso"></p>
+    <div id="guia-topo" class="guia-topo">
+        Toque nos <strong>3 pontinhos (⋮)</strong> aqui em cima e escolha <strong>"Abrir no navegador"</strong> ou <strong>"Abrir no Chrome"</strong>.
+    </div>
+
+    <div class="card">
+        <h1>Abra no seu navegador</h1>
+        <p id="descricao">
+            Para uma melhor experiência, abra esta página diretamente no Chrome ou no navegador padrão do seu celular.
+        </p>
+
+        <a id="btn-abrir" class="btn btn-primario" href="https://google.com">
+            Abrir no Chrome
+        </a>
+
+        <button id="btn-copiar" class="btn btn-secundario" type="button">
+            Copiar link
+        </button>
+
+        <div id="url-texto" class="url-box">https://google.com</div>
+    </div>
 
     <script>
         (function () {
+            // 1. COLOQUE AQUI O SEU LINK FINAL
             const targetUrl = "https://google.com";
-            const link = document.getElementById("abrir-chrome");
-            const aviso = document.getElementById("aviso");
+
+            const btnAbrir = document.getElementById("btn-abrir");
+            const btnCopiar = document.getElementById("btn-copiar");
+            const guiaTopo = document.getElementById("guia-topo");
+            const urlTexto = document.getElementById("url-texto");
             const ua = navigator.userAgent || "";
+
+            urlTexto.textContent = targetUrl;
+            btnAbrir.href = targetUrl;
 
             const isAndroid = /Android/i.test(ua);
             const isIOS = /iPhone|iPad|iPod/i.test(ua);
+            const isWebView = /wv|FBAN|FBAV|Instagram|WhatsApp|Line|MicroMessenger|TikTok/i.test(ua);
 
+            // Configura o link do botão principal conforme o sistema
             if (isAndroid) {
-                // Remove "https://" para montar o intent do Android
                 const cleanUrl = targetUrl.replace(/^https?:\/\//i, "");
-                link.href = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+                const fallbackUrl = encodeURIComponent(targetUrl);
+                btnAbrir.href = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${fallbackUrl};end`;
             } else if (isIOS) {
-                // No iOS, usa googlechromes:// com a URL codificada
-                const encodedUrl = encodeURIComponent(targetUrl);
-                link.href = `googlechromes://${targetUrl.replace(/^https?:\/\//i, "")}`;
-                // Alternativa em alguns contextos iOS: googlechrome://navigate?url=${encodedUrl}
-            } else {
-                // Em computadores, o link abre normalmente no navegador padrão
-                link.href = targetUrl;
-                link.target = "_blank";
-                aviso.textContent = "No computador, navegadores não forçam a abertura em outro navegador por padrão.";
+                btnAbrir.href = `googlechromes://${targetUrl.replace(/^https?:\/\//i, "")}`;
+            }
+
+            // Se estiver dentro do Instagram, WhatsApp, TikTok etc., mostra o balão apontando para o menu
+            if (isWebView) {
+                guiaTopo.style.display = "block";
+            }
+
+            // Caso o usuário clique em "Abrir no Chrome" e o app bloqueie a saída, reforça o aviso
+            btnAbrir.addEventListener("click", function () {
+                setTimeout(function () {
+                    if (!document.hidden) {
+                        guiaTopo.style.display = "block";
+                    }
+                }, 1000);
+            });
+
+            // Função de copiar link com fallback para WebViews mais antigos
+            btnCopiar.addEventListener("click", function () {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(targetUrl)
+                        .then(confirmarCopia)
+                        .catch(copiarFallback);
+                } else {
+                    copiarFallback();
+                }
+            });
+
+            function copiarFallback() {
+                const inputTemp = document.createElement("textarea");
+                inputTemp.value = targetUrl;
+                inputTemp.style.position = "fixed";
+                inputTemp.style.opacity = "0";
+                document.body.appendChild(inputTemp);
+                inputTemp.focus();
+                inputTemp.select();
+                try {
+                    document.execCommand("copy");
+                    confirmarCopia();
+                } catch (e) {
+                    btnCopiar.textContent = "Selecione e copie o link abaixo";
+                }
+                document.body.removeChild(inputTemp);
+            }
+
+            function confirmarCopia() {
+                btnCopiar.textContent = "Link copiado! Cole no Chrome";
+                btnCopiar.classList.remove("btn-secundario");
+                btnCopiar.classList.add("btn-copiado");
+
+                setTimeout(function () {
+                    btnCopiar.textContent = "Copiar link";
+                    btnCopiar.classList.remove("btn-copiado");
+                    btnCopiar.classList.add("btn-secundario");
+                }, 3000);
             }
         })();
     </script>
