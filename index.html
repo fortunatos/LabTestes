@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abrir no Chrome via Esquema Direto</title>
+    <title>Abrir no Chrome</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
+            flex-direction: column;
+            gap: 12px;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
             background-color: #f5f5f5;
+            padding: 16px;
+            text-align: center;
         }
         .btn-chrome {
             display: inline-block;
@@ -24,14 +28,47 @@
             text-decoration: none;
             border-radius: 8px;
         }
+        .aviso {
+            max-width: 420px;
+            font-size: 14px;
+            color: #555;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Link usando o esquema direto do Google Chrome -->
-    <a class="btn-chrome" href="googlechrome://navigate?url=https://google.com">
+    <a id="abrir-chrome" class="btn-chrome" href="https://google.com" rel="noopener noreferrer">
         Abrir no Chrome
     </a>
+    <p id="aviso" class="aviso"></p>
+
+    <script>
+        (function () {
+            const targetUrl = "https://google.com";
+            const link = document.getElementById("abrir-chrome");
+            const aviso = document.getElementById("aviso");
+            const ua = navigator.userAgent || "";
+
+            const isAndroid = /Android/i.test(ua);
+            const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+            if (isAndroid) {
+                // Remove "https://" para montar o intent do Android
+                const cleanUrl = targetUrl.replace(/^https?:\/\//i, "");
+                link.href = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+            } else if (isIOS) {
+                // No iOS, usa googlechromes:// com a URL codificada
+                const encodedUrl = encodeURIComponent(targetUrl);
+                link.href = `googlechromes://${targetUrl.replace(/^https?:\/\//i, "")}`;
+                // Alternativa em alguns contextos iOS: googlechrome://navigate?url=${encodedUrl}
+            } else {
+                // Em computadores, o link abre normalmente no navegador padrão
+                link.href = targetUrl;
+                link.target = "_blank";
+                aviso.textContent = "No computador, navegadores não forçam a abertura em outro navegador por padrão.";
+            }
+        })();
+    </script>
 
 </body>
 </html>
